@@ -964,6 +964,7 @@ let begin_assembly() =
   | ARMv6   -> `	.arch	armv6\n`
   | ARMv6T2 -> `	.arch	armv6t2\n`
   | ARMv7   -> `	.arch	armv7-a\n`
+  | ARMv7R  -> `	.arch	armv7-r\n`
   | ARMv8   -> `	.arch	armv8-a\n`
   end;
   begin match !fpu with
@@ -1017,7 +1018,7 @@ let end_assembly () =
   `	.type	{emit_symbol lbl}, %object\n`;
   `	.size	{emit_symbol lbl}, .-{emit_symbol lbl}\n`;
   begin match Config.system with
-    "linux_eabihf" | "linux_eabi" | "netbsd" ->
+    "linux_eabihf" | "linux_eabi" | "freestanding_eabihf" | "freestanding_eabi" | "netbsd" ->
       (* Mark stack as non-executable *)
       `	.section	.note.GNU-stack,\"\",%progbits\n`
   | _ -> ()

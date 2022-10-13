@@ -2,11 +2,12 @@
 (*                                                                        *)
 (*                                 OCaml                                  *)
 (*                                                                        *)
-(*                 Benedikt Meurer, University of Siegen                  *)
+(*                            Takayuki Imada                              *)
 (*                                                                        *)
 (*   Copyright 1998 Institut National de Recherche en Informatique et     *)
 (*     en Automatique.                                                    *)
 (*   Copyright 2012 Benedikt Meurer.                                      *)
+(*   Copyright 2021 Takayuki Imada.                                       *)
 (*                                                                        *)
 (*   All rights reserved.  This file is distributed under the terms of    *)
 (*   the GNU Lesser General Public License version 2.1, with the          *)
@@ -19,13 +20,13 @@
 open Format
 
 type abi = EABI | EABI_HF
-type arch = ARMv4 | ARMv5 | ARMv5TE | ARMv6 | ARMv6T2 | ARMv7 | ARMv8
+type arch = ARMv4 | ARMv5 | ARMv5TE | ARMv6 | ARMv6T2 | ARMv7 | ARMv7R | ARMv8
 type fpu = Soft | VFPv2 | VFPv3_D16 | VFPv3
 
 let abi =
   match Config.system with
-    "linux_eabi" | "freebsd" -> EABI
-  | "linux_eabihf" | "netbsd" -> EABI_HF
+    "linux_eabi" | "freestanding_eabi" | "freebsd" -> EABI
+  | "linux_eabihf" | "freestanding_eabihf" | "netbsd" -> EABI_HF
   | _ -> assert false
 
 let string_of_arch = function
@@ -35,6 +36,7 @@ let string_of_arch = function
   | ARMv6   -> "armv6"
   | ARMv6T2 -> "armv6t2"
   | ARMv7   -> "armv7"
+  | ARMv7R  -> "armv7r"
   | ARMv8   -> "armv8"
 
 let string_of_fpu = function
@@ -49,16 +51,18 @@ let (arch, fpu, thumb) =
   let (def_arch, def_fpu, def_thumb) =
     begin match abi, Config.model with
     (* Defaults for architecture, FPU and Thumb *)
-      EABI, "armv5"    -> ARMv5,   Soft,      false
-    | EABI, "armv5te"  -> ARMv5TE, Soft,      false
-    | EABI, "armv6"    -> ARMv6,   Soft,      false
-    | EABI, "armv6t2"  -> ARMv6T2, Soft,      false
-    | EABI, "armv7"    -> ARMv7,   Soft,      false
-    | EABI, "armv8"    -> ARMv8,   Soft,      false
-    | EABI, _          -> ARMv4,   Soft,      false
-    | EABI_HF, "armv6" -> ARMv6,   VFPv2,     false
-    | EABI_HF, "armv8" -> ARMv8,   VFPv3,     true
-    | EABI_HF, _       -> ARMv7,   VFPv3_D16, true
+      EABI, "armv5"      -> ARMv5,   Soft,      false
+    | EABI, "armv5te"    -> ARMv5TE, Soft,      false
+    | EABI, "armv6"      -> ARMv6,   Soft,      false
+    | EABI, "armv6t2"    -> ARMv6T2, Soft,      false
+    | EABI, "armv7"      -> ARMv7,   Soft,      false
+    | EABI, "armv7r"     -> ARMv7R,  Soft,      false
+    | EABI, "armv8"      -> ARMv8,   Soft,      false
+    | EABI, _            -> ARMv4,   Soft,      false
+    | EABI_HF, "armv6"   -> ARMv6,   VFPv2,     false
+    | EABI_HF, "armv8"   -> ARMv8,   VFPv3,     true
+    | EABI_HF, "armv7r"  -> ARMv7R,  VFPv3_D16, true
+    | EABI_HF, _         -> ARMv7,   VFPv3_D16, true
     end in
   (ref def_arch, ref def_fpu, ref def_thumb)
 
@@ -70,6 +74,7 @@ let farch spec =
            | "armv6"                       -> ARMv6
            | "armv6t2"                     -> ARMv6T2
            | "armv7"                       -> ARMv7
+           | "armv7r"                      -> ARMv7R
            | "armv8"                       -> ARMv8
            | spec -> raise (Arg.Bad ("wrong '-farch' option: " ^ spec))
   end

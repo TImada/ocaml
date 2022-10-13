@@ -518,14 +518,25 @@ AS_CASE([$host],
     [unix_or_win32="win32"
     unixlib="win32unix"
     ],
-  [unix_or_win32="unix"
-  unixlib="unix"])
+  [AS_CASE([$target],
+    [armv7r-*],
+      [unix_or_win32="freestanding"
+      unixlib=""
+      ],
+    [unix_or_win32="unix"
+    unixlib="unix"])])
+
 AS_CASE([$host],
   [*-*-cygwin*|*-*-mingw32|*-pc-windows],
     [exeext=".exe"],
   [exeext=''])
 
-otherlibraries="dynlink"
+AS_CASE([$target],
+  [armv7r-freestanding-*],
+    [otherlibraries=""
+    ],
+  [otherlibraries="dynlink"])
+
 AS_IF([test x"$enable_unix_lib" != "xno"],
   [AS_IF([test x"$enable_bigarray_lib" != "xno"],
     [otherlibraries="$otherlibraries $unixlib bigarray"],
@@ -1128,6 +1139,15 @@ AS_CASE([$host],
     [arch=riscv; model=riscv64; system=linux]
 )
 
+# Update arch/model/system for FreeRTOS-based targets
+# TODO: Need a better solution
+AS_CASE([$target],
+  [armv7r-freestanding-*eabihf],
+    [arch=arm; model=armv7r; system=freestanding_eabihf],
+  [armv7r-freestanding-*eabi],
+    [arch=arm; model=armv7r; system=freestanding_eabi]
+)
+
 AS_IF([test x"$enable_native_compiler" = "xno"],
   [native_compiler=false
   AC_MSG_NOTICE([the native compiler is disabled])],
@@ -1183,7 +1203,10 @@ AS_CASE([$arch],
 # Assembler
 
 AS_IF([test -n "$target_alias"],
-  [toolpref="${target_alias}-"
+  [AS_CASE([$target_alias], 
+     [armv7r-*],
+       [toolpref="arm-none-eabi-"],
+     [toolpref="${target_alias}-"])
   as_target="$target"
   as_cpu="$target_cpu"],
   [AS_IF([test -n "$host_alias"],
@@ -1212,6 +1235,9 @@ AS_CASE([$as_target,$ocaml_cv_cc_vendor],
     [AS_CASE([$as_cpu],
       [x86_64|arm*|aarch64*|i[[3-6]]86|riscv*],
         [default_as="${toolpref}as"])],
+  [armv7r-*,*],
+    [default_as="${toolpref}as -c"
+    default_aspp="${toolpref}gcc -c"],
   [i686-pc-windows,*],
     [default_as="ml -nologo -coff -Cp -c -Fo"
     default_aspp="$default_as"],
@@ -1936,6 +1962,16 @@ AS_IF([test x"$enable_force_safe_string" = "xno"],
 AS_IF([test x"$DEFAULT_STRING" = "xunsafe"],
   [default_safe_string=false],
   [default_safe_string=true])
+
+## ARMv7-R specific
+## TODO: need fixed?
+AS_CASE([$model],
+  [armv7r-*hf],
+    [common_cflags="$common_cflags -march=armv7-r+vfpv3-d16 -mfpu=vfpv3-d16 -mfloat-abi=hard -mthumb"
+    common_cppflags="$common_cppflags"],
+  [armv7r-*],
+    [common_cflags="$common_cflags -march=armv7-r+vfpv3-d16 -mfpu=vfpv3-d16 -mfloat-abi=soft"
+    common_cppflags="$common_cppflags"])
 
 oc_cflags="$common_cflags $internal_cflags"
 oc_cppflags="$common_cppflags $internal_cppflags"

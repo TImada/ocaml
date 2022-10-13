@@ -115,6 +115,8 @@ OC_NATIVE_CPPFLAGS = -DNATIVE_CODE -DTARGET_$(ARCH)
 
 ifeq "$(UNIX_OR_WIN32)" "unix"
 OC_NATIVE_CPPFLAGS += -DMODEL_$(MODEL)
+else ifeq "$(UNIX_OR_WIN32)" "freestanding"
+OC_NATIVE_CPPFLAGS += -DMODEL_$(MODEL)
 endif
 
 OC_NATIVE_CPPFLAGS += -DSYS_$(SYSTEM)
@@ -129,6 +131,21 @@ endif
 ASPPFLAGS = -DSYS_$(SYSTEM) -I$(ROOTDIR)/runtime
 ifeq "$(UNIX_OR_WIN32)" "unix"
 ASPPFLAGS += -DMODEL_$(MODEL)
+else ifeq "$(UNIX_OR_WIN32)" "freestanding"
+ASPPFLAGS += -DMODEL_$(MODEL)
+endif
+
+# CPU architecture specific compiler options
+ifeq "$(MODEL)" "armv7r"
+OC_CFLAGS += -march=armv7-r+vfpv3-d16 -mfpu=vfpv3-d16  
+OC_CPPFLAGS += -march=armv7-r+vfpv3-d16 -mfpu=vfpv3-d16   
+ifeq "$(SYSTEM)" "freestanding_eabi"
+OC_CFLAGS += -mfloat-abi=softfp 
+OC_CPPFLAGS += -mfloat-abi=softfp  
+else ifeq "$(SYSTEM)" "freestanding_eabihf"
+OC_CFLAGS += -mfloat-abi=hard -mthumb 
+OC_CPPFLAGS += -mfloat-abi=hard -mthumb  
+endif
 endif
 
 # Commands used to build native libraries
@@ -142,8 +159,12 @@ endif
 # Build, install and clean targets
 
 .PHONY: all
+ifeq "$(UNIX_OR_WIN32)" "freestanding"
+all: primitives ld.conf $(PROGRAMS) sak$(EXE)
+else
 all: $(BYTECODE_STATIC_LIBRARIES) $(BYTECODE_SHARED_LIBRARIES) $(PROGRAMS) \
      sak$(EXE)
+endif
 
 .PHONY: allopt
 ifneq "$(NATIVE_COMPILER)" "false"
@@ -265,10 +286,18 @@ build_config.h: $(ROOTDIR)/Makefile.config sak$(EXE)
 # Libraries and programs
 
 ocamlrun$(EXE): prims.$(O) libcamlrun.$(A)
+ifeq "$(UNIX_OR_WIN32)" "freestanding"
+	-cp $(shell which ocamlrun) ocamlrun
+else
 	$(MKEXE) -o $@ $^ $(LIBS)
+endif
 
 ocamlruns$(EXE): prims.$(O) libcamlrun_non_shared.$(A)
+ifeq "$(UNIX_OR_WIN32)" "freestanding"
+	-cp $(shell which ocamlruns) ocamlruns
+else
 	$(call MKEXE_USING_COMPILER,$@,$^ $(LIBS))
+endif
 
 libcamlrun.$(A): $(libcamlrun_OBJECTS)
 	$(call MKLIB,$@, $^)
@@ -277,13 +306,21 @@ libcamlrun_non_shared.$(A): $(libcamlrun_non_shared_OBJECTS)
 	$(call MKLIB,$@, $^)
 
 ocamlrund$(EXE): prims.$(O) libcamlrund.$(A)
+ifeq "$(UNIX_OR_WIN32)" "freestanding"
+	-cp $(shell which ocamlrund) ocamlrund
+else
 	$(MKEXE) $(MKEXEDEBUGFLAG) -o $@ $^ $(LIBS)
+endif
 
 libcamlrund.$(A): $(libcamlrund_OBJECTS)
 	$(call MKLIB,$@, $^)
 
 ocamlruni$(EXE): prims.$(O) libcamlruni.$(A)
+ifeq "$(UNIX_OR_WIN32)" "freestanding"
+	-cp $(shell which ocamlruni) ocamlruni
+else
 	$(MKEXE) -o $@ $^ $(INSTRUMENTED_RUNTIME_LIBS) $(LIBS)
+endif
 
 libcamlruni.$(A): $(libcamlruni_OBJECTS)
 	$(call MKLIB,$@, $^)

@@ -52,7 +52,11 @@ static int extern_flags;        /* logical or of some of the flags above */
 
 struct extern_item { value * v; mlsize_t count; };
 
+#if defined(MODEL_armv7r)
+#define EXTERN_STACK_INIT_SIZE 32
+#else
 #define EXTERN_STACK_INIT_SIZE 256
+#endif
 #define EXTERN_STACK_MAX_SIZE (1024*1024*100)
 
 static struct extern_item extern_stack_init[EXTERN_STACK_INIT_SIZE];

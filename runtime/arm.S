@@ -77,6 +77,21 @@
         cmp     \reg, #0
         beq     \lbl
         .endm
+
+/* For ARMv7-R on top of a FreeRTOS platform */
+#elif defined(SYS_freestanding_eabi) && defined(MODEL_armv7r)
+        .arch   armv7-r
+        .arm
+
+    /* Compatibility macros */
+        .macro  cbz reg, lbl
+        cmp     \reg, #0
+        beq     \lbl
+        .endm
+#elif defined(SYS_freestanding_eabihf) && defined(MODEL_armv7r)
+        .arch   armv7-r
+        .fpu    vfpv3-d16
+        .thumb
 #endif
 
 trap_ptr          .req    r8
@@ -143,13 +158,13 @@ FUNCTION(caml_call_gc)
         str     lr, Caml_state(last_return_address)
     /* Record lowest stack address */
         str     sp, Caml_state(bottom_of_stack)
-#if defined(SYS_linux_eabihf) || defined(SYS_netbsd)
+#if defined(SYS_linux_eabihf) || defined(SYS_netbsd) || defined(SYS_freestanding_eabihf)
     /* Save caller floating-point registers on the stack */
         vpush   {d0-d7}; CFI_ADJUST(64)
 #endif
     /* Save integer registers and return address on the stack */
         push    {r0-r7,r12,lr}; CFI_ADJUST(40)
-#if defined(SYS_linux_eabihf) || defined(SYS_netbsd)
+#if defined(SYS_linux_eabihf) || defined(SYS_netbsd) || defined(SYS_freestanding_eabihf)
         CFI_OFFSET(lr, -68)
 #else
         CFI_OFFSET(lr, -4)
@@ -164,7 +179,7 @@ FUNCTION(caml_call_gc)
         bl      caml_garbage_collection
     /* Restore integer registers and return address from the stack */
         pop     {r0-r7,r12,lr}; CFI_ADJUST(-40)
-#if defined(SYS_linux_eabihf) || defined(SYS_netbsd)
+#if defined(SYS_linux_eabihf) || defined(SYS_netbsd) || defined(SYS_freestanding_eabihf)
     /* Restore floating-point registers from the stack */
         vpop    {d0-d7}; CFI_ADJUST(-64)
 #endif
@@ -249,13 +264,13 @@ FUNCTION(caml_start_program)
 /* Arguments to the OCaml code are in r0...r3 */
 
 .Ljump_to_caml:
-#if defined(SYS_linux_eabihf) || defined(SYS_netbsd)
+#if defined(SYS_linux_eabihf) || defined(SYS_netbsd) || defined(SYS_freestanding_eabihf)
     /* Save callee-save floating-point registers */
         vpush   {d8-d15}; CFI_ADJUST(64)
 #endif
     /* Save return address and callee-save registers */
         push    {r4-r8,r10,r11,lr}; CFI_ADJUST(32)      /* 8-byte alignment */
-#if defined(SYS_linux_eabihf) || defined(SYS_netbsd)
+#if defined(SYS_linux_eabihf) || defined(SYS_netbsd) || defined(SYS_freestanding_eabihf)
         CFI_OFFSET(lr, -68)
 #else
         CFI_OFFSET(lr, -4)
@@ -299,7 +314,7 @@ FUNCTION(caml_start_program)
         str     alloc_ptr, Caml_state(young_ptr)
     /* Reload callee-save registers and return address */
         pop     {r4-r8,r10,r11,lr}; CFI_ADJUST(-32)
-#if defined(SYS_linux_eabihf) || defined(SYS_netbsd)
+#if defined(SYS_linux_eabihf) || defined(SYS_netbsd) || defined(SYS_freestanding_eabihf)
     /* Reload callee-save floating-point registers */
         vpop    {d8-d15}; CFI_ADJUST(-64)
 #endif

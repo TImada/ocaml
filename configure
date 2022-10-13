@@ -2796,7 +2796,7 @@ common_cflags=""
 common_cppflags=""
 internal_cflags=""
 internal_cppflags=""
-ocamlc_cflags=""
+ocamlc_cflags="$OCAMLC_CFLAGS "
 ocamlc_cppflags=""
 oc_ldflags=""
 oc_dll_ldflags=""
@@ -12614,11 +12614,16 @@ esac
 case $host in #(
   *-*-mingw32|*-pc-windows) :
     unix_or_win32="win32"
-    unixlib="win32unix"
-     ;; #(
+    unixlib="win32unix" ;; #(
   *) :
-    unix_or_win32="unix"
-  unixlib="unix" ;;
+    case $target in #(
+      armv7r-*) :
+        unix_or_win32="freestanding"
+        unixlib="" ;; #(
+      *) :
+        unix_or_win32="unix"
+        unixlib="unix" ;;
+    esac
 esac
 case $host in #(
   *-*-cygwin*|*-*-mingw32|*-pc-windows) :
@@ -12627,7 +12632,13 @@ case $host in #(
     exeext='' ;;
 esac
 
-otherlibraries="dynlink"
+case $target in #(
+  armv7r-*) :
+    otherlibraries="" ;; #(
+  *) :
+    otherlibraries="" ;;
+esac
+
 if test x"$enable_unix_lib" != "xno"; then :
   if test x"$enable_bigarray_lib" != "xno"; then :
   otherlibraries="$otherlibraries $unixlib bigarray"
@@ -14332,6 +14343,15 @@ fi; system=elf ;; #(
      ;;
 esac
 
+# Update arch/model/system for FreeRTOS-based targets
+# TODO: Need a better solution
+case $target in #(
+  armv7r-freestanding-*eabihf) :
+    arch=arm; model=armv7r; system=freestanding_eabihf ;; #(
+  armv7r-freestanding-*eabi) :
+    arch=arm; model=armv7r; system=freestanding_eabi ;;
+esac
+
 if test x"$enable_native_compiler" = "xno"; then :
   native_compiler=false
   { $as_echo "$as_me:${as_lineno-$LINENO}: the native compiler is disabled" >&5
@@ -14504,7 +14524,12 @@ esac
 # Assembler
 
 if test -n "$target_alias"; then :
-  toolpref="${target_alias}-"
+  case $target_alias in #(
+    armv7r-*) :
+      toolpref="arm-none-eabi-" ;; #(
+    *) :
+      toolpref="${target_alias}-" ;;
+  esac
   as_target="$target"
   as_cpu="$target_cpu"
 else
@@ -14540,6 +14565,9 @@ case $as_target,$ocaml_cv_cc_vendor in #(
   *) :
      ;;
 esac ;; #(
+  armv7r-*,*) :
+    default_as="${toolpref}as -c"
+    default_aspp="${toolpref}gcc -c" ;; #(
   i686-pc-windows,*) :
     default_as="ml -nologo -coff -Cp -c -Fo"
     default_aspp="$default_as" ;; #(
@@ -17710,9 +17738,20 @@ else
   default_safe_string=true
 fi
 
-oc_cflags="$common_cflags $internal_cflags"
+case $target in #(
+  armv7r-*hf) :
+    common_cflags="$common_cflags -march=armv7-r+vfpv3-d16 -mfpu=vfpv3-d16 -mfloat-abi=hard -mthumb"
+    common_cppflags="$common_cppflags -march=armv7-r+vfpv3-d16 -mfpu=vfpv3-d16 -mfloat-abi=hard -mthumb" ;; #(
+  armv7r-*) :
+    common_cflags="$common_cflags -march=armv7-r+vfpv3-d16 -mfpu=vfpv3-d16 -mfloat-abi=soft"
+    common_cppflags="$common_cppflags -march=armv7-r+vfpv3-d16 -mfpu=vfpv3-d16 -mfloat-abi=soft" ;;
+  *) :
+    ;;
+esac
+
+oc_cflags="$OC_CFLAGS $common_cflags $internal_cflags"
 oc_cppflags="$common_cppflags $internal_cppflags"
-ocamlc_cflags="$common_cflags $sharedlib_cflags \$(CFLAGS)"
+ocamlc_cflags="$OCAMLC_CFLAGS $common_cflags $sharedlib_cflags \$(CFLAGS)"
 ocamlc_cppflags="$common_cppflags \$(CPPFLAGS)"
 cclibs="$cclibs $mathlib"
 
@@ -17725,7 +17764,7 @@ case $host in #(
     nativecclibs="advapi32.lib ws2_32.lib version.lib" ;; #(
   *) :
     bytecclibs="$cclibs $DLLIBS $PTHREAD_LIBS"
-  nativecclibs="$cclibs $DLLIBS" ;;
+  nativecclibs="$GLOBAL_LIBS" ;;
 esac
 
 if test x"$libdir" = x'${exec_prefix}/lib'; then :

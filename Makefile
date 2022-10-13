@@ -774,7 +774,11 @@ partialclean::
 # The runtime system for the bytecode compiler
 
 $(SAK):
+ifeq "$(UNIX_OR_WIN32)" "freestanding"
+	$(MAKE) -C runtime sak$(EXE) SAK_CC=gcc SAK_CFLAGS=-O2 SAK_LINK="gcc -O2 -o sak sak.o"
+else
 	$(MAKE) -C runtime sak$(EXE)
+endif
 
 .PHONY: runtime
 runtime: stdlib/libcamlrun.$(A)

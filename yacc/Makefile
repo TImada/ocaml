@@ -38,8 +38,11 @@ generated_files := ocamlyacc$(EXE) $(ocamlyacc_OBJECTS)  version.h
 all: ocamlyacc$(EXE)
 
 ocamlyacc$(EXE): $(ocamlyacc_OBJECTS)
+ifeq "$(UNIX_OR_WIN32)" "freestanding"
+	-cp $(shell which ocamlyacc) ocamlyacc
+else
 	$(MKEXE) -o $@ $^ $(EXTRALIBS)
-
+endif
 version.h : $(ROOTDIR)/VERSION
 	echo "#define OCAML_VERSION \"`sed -e 1q $< | tr -d '\r'`\"" > $@
 

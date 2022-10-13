@@ -246,7 +246,11 @@ struct intern_item {
    be to instantiate stack these function via. C preprocessor macro.
  */
 
+#if defined(MODEL_armv7r)
+#define INTERN_STACK_INIT_SIZE 64
+#else
 #define INTERN_STACK_INIT_SIZE 256
+#endif
 #define INTERN_STACK_MAX_SIZE (1024*1024*100)
 
 static struct intern_item intern_stack_init[INTERN_STACK_INIT_SIZE];

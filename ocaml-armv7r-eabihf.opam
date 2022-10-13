@@ -1,0 +1,28 @@
+opam-version: "2.0"
+version: "4.13.1"
+synopsis: "OCaml 4.13.1 for ARMv7-R with VPFv3-D16 FP ABIs"
+depends: [
+  "ocaml" {= "4.13.1"}
+]
+flags: compiler
+setenv: CAML_LD_LIBRARY_PATH = "%{lib}%/stublibs"
+build: [
+  ["./configure" 
+   "CFLAGS=--specs=nosys.specs"
+   "--prefix=%{prefix}%/armv7r"
+   "-host=arm-none-eabi"
+   "-target=armv7r-freestanding-eabihf"
+   "-disable-shared"
+   "-disable-systhreads"
+   "-disable-unix-lib"
+   "-disable-instrumented-runtime"]
+  [make "world" "-j%{jobs}%"]
+  [make "opt" "-j%{jobs}%"]
+]
+install: [make "install"]
+maintainer: "Takayuki Imada <takayuki.imada@gmail.com>"
+homepage: "https://github.com/TImada/ocaml/"
+bug-reports: "https://github.com/TImada/ocaml/issues"
+authors: [
+  "Takayuki Imada"
+]
