@@ -214,10 +214,12 @@ typedef uint64_t uintnat;
 #define Max_stack_def (1024 * 1024)
 #endif
 
+
 /* Maximum size of a block allocated in the young generation (words). */
 /* Must be > 4 */
 #define Max_young_wosize 256
 #define Max_young_whsize (Whsize_wosize (Max_young_wosize))
+
 
 /* Minimum size of the minor zone (words).
    This must be at least [2 * Max_young_whsize]. */
@@ -238,6 +240,7 @@ typedef uint64_t uintnat;
 #else
 #define Minor_heap_def 262144
 #endif
+
 
 /* Minimum size increment when growing the heap (words).
    Must be a multiple of [Page_size / sizeof (value)]. */
@@ -264,6 +267,7 @@ typedef uint64_t uintnat;
 #define Init_heap_def (31 * Page_size)
 #endif
 /* (about 512 kB for a 32-bit platform, 1 MB for a 64-bit platform.) */
+
 
 /* Default speed setting for the major GC.  The heap will grow until
    the dead objects and the free list represent this percentage of the
