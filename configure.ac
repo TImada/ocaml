@@ -526,7 +526,7 @@ AS_CASE([$host],
     unixlib="win32unix"
     ],
   [AS_CASE([$target],
-    [armv7r-*],
+    [armv7r-*|armv7m-*],
       [unix_or_win32="freestanding"
       unixlib=""
       ],
@@ -538,7 +538,7 @@ AS_CASE([$host],
   [exeext=''])
 
 AS_CASE([$target],
-  [armv7r-freestanding-*],
+  [armv7r-freestanding-*|armv7m-freestanding-*],
     [otherlibraries=""
     ],
   [otherlibraries="dynlink"])
@@ -1161,6 +1161,10 @@ AS_CASE([$target],
     [arch=arm; model=armv7r; system=freestanding_eabihf],
   [armv7r-freestanding-*eabi],
     [arch=arm; model=armv7r; system=freestanding_eabi]
+  [armv7m-cm7-freestanding-*eabihf],
+    [arch=arm; model=armv7m_cm7; system=freestanding_eabihf],
+  [armv7m-cm7-freestanding-*eabi],
+    [arch=arm; model=armv7m_cm7; system=freestanding_eabi]
 )
 
 AS_IF([test x"$enable_native_compiler" = "xno"],
@@ -1219,7 +1223,7 @@ AS_CASE([$arch],
 
 AS_IF([test -n "$target_alias"],
   [AS_CASE([$target_alias], 
-     [armv7r-*],
+     [armv7r-*|armv7m-*],
        [toolpref="arm-none-eabi-"],
      [toolpref="${target_alias}-"])
   as_target="$target"
@@ -1250,7 +1254,7 @@ AS_CASE([$as_target,$ocaml_cv_cc_vendor],
     [AS_CASE([$as_cpu],
       [x86_64|arm*|aarch64*|i[[3-6]]86|riscv*],
         [default_as="${toolpref}as"])],
-  [armv7r-*,*],
+  [armv7r-*,*|armv7m-*,*],
     [default_as="${toolpref}as -c"
     default_aspp="${toolpref}gcc -c"],
   [i686-pc-windows,*],
@@ -1998,6 +2002,12 @@ AS_CASE([$model],
     common_cppflags="$common_cppflags"],
   [armv7r-*],
     [common_cflags="$common_cflags -march=armv7-r+vfpv3-d16 -mfpu=vfpv3-d16 -mfloat-abi=soft"
+    common_cppflags="$common_cppflags"],
+  [armv7m-cm7-*hf],
+    [common_cflags="$common_cflags -mcpu=cortex-m7 -mfpu=fpv5-d16 -mfloat-abi=hard -mthumb"
+    common_cppflags="$common_cppflags"],
+  [armv7m-cm7-*],
+    [common_cflags="$common_cflags -mcpu=cortex-m7 -mfpu=fpv5-d16 -mfloat-abi=soft -mthumb"
     common_cppflags="$common_cppflags"])
 
 oc_cflags="$OC_CFLAGS $common_cflags $internal_cflags"

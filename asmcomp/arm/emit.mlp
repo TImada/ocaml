@@ -980,20 +980,22 @@ let begin_assembly() =
   `	.file	\"\"\n`;  (* PR#7037 *)
   `	.syntax	unified\n`;
   begin match !arch with
-  | ARMv4   -> `	.arch	armv4t\n`
-  | ARMv5   -> `	.arch	armv5t\n`
-  | ARMv5TE -> `	.arch	armv5te\n`
-  | ARMv6   -> `	.arch	armv6\n`
-  | ARMv6T2 -> `	.arch	armv6t2\n`
-  | ARMv7   -> `	.arch	armv7-a\n`
-  | ARMv7R  -> `	.arch	armv7-r\n`
-  | ARMv8   -> `	.arch	armv8-a\n`
+  | ARMv4      -> `	.arch	armv4t\n`
+  | ARMv5      -> `	.arch	armv5t\n`
+  | ARMv5TE    -> `	.arch	armv5te\n`
+  | ARMv6      -> `	.arch	armv6\n`
+  | ARMv6T2    -> `	.arch	armv6t2\n`
+  | ARMv7      -> `	.arch	armv7-a\n`
+  | ARMv7R     -> `	.arch	armv7-r\n`
+  | ARMv7M_CM7 -> `	.arch	armv7e-m\n`
+  | ARMv8      -> `	.arch	armv8-a\n`
   end;
   begin match !fpu with
     Soft      -> `	.fpu	softvfp\n`
   | VFPv2     -> `	.fpu	vfpv2\n`
   | VFPv3_D16 -> `	.fpu	vfpv3-d16\n`
   | VFPv3     -> `	.fpu	vfpv3\n`
+  | FPv5_D16  -> `	.fpu	fpv5-d16\n`
   end;
   `trap_ptr	.req	r8\n`;
   `alloc_ptr	.req	r10\n`;

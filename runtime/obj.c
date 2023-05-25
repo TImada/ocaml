@@ -276,7 +276,7 @@ CAMLprim value caml_int_as_pointer (value n) {
 /* Compute how many words in the heap are occupied by blocks accessible
    from a given value */
 
-#if defined(MODEL_armv7r)
+#if defined(MODEL_armv7r) || defined(MODEL_armv7m_cm7)
 #define ENTRIES_PER_QUEUE_CHUNK 256
 #else
 #define ENTRIES_PER_QUEUE_CHUNK 4096

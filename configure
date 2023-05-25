@@ -12650,7 +12650,7 @@ case $host in #(
      ;; #(
   *) :
     case $target in #(
-      armv7r-*) :
+      armv7r-*|armv7m-*) :
         unix_or_win32="freestanding"
         unixlib="" ;; #(
       *) :
@@ -12666,7 +12666,7 @@ case $host in #(
 esac
 
 case $target in #(
-  armv7r-*) :
+  armv7r-*|armv7m-*) :
     otherlibraries="" ;; #(
   *) :
     otherlibraries="" ;;
@@ -14412,6 +14412,10 @@ case $target in #(
     arch=arm; model=armv7r; system=freestanding_eabihf ;; #(
   armv7r-freestanding-*eabi) :
     arch=arm; model=armv7r; system=freestanding_eabi ;;
+  armv7m-cm7-freestanding-*eabihf) :
+    arch=arm; model=armv7m_cm7; system=freestanding_eabihf ;; #(
+  armv7m-cm7-freestanding-*eabi) :
+    arch=arm; model=armv7m_cm7; system=freestanding_eabi ;;
 esac
 
 if test x"$enable_native_compiler" = "xno"; then :
@@ -14587,7 +14591,7 @@ esac
 
 if test -n "$target_alias"; then :
   case $target_alias in #(
-    armv7r-*) :
+    armv7r-*|armv7m-*) :
       toolpref="arm-none-eabi-" ;; #(
     *) :
       toolpref="${target_alias}-" ;;
@@ -14627,7 +14631,7 @@ case $as_target,$ocaml_cv_cc_vendor in #(
   *) :
      ;;
 esac ;; #(
-  armv7r-*,*) :
+  armv7r-*,*|armv7m-*,*) :
     default_as="${toolpref}as -c"
     default_aspp="${toolpref}gcc -c" ;; #(
   i686-pc-windows,*) :
@@ -17839,6 +17843,12 @@ case $target in #(
   armv7r-*) :
     common_cflags="$common_cflags -march=armv7-r+vfpv3-d16 -mfpu=vfpv3-d16 -mfloat-abi=soft"
     common_cppflags="$common_cppflags -march=armv7-r+vfpv3-d16 -mfpu=vfpv3-d16 -mfloat-abi=soft" ;;
+  armv7m-cm7-*hf) :
+    common_cflags="$common_cflags -mcpu=cortex-m7 -mfpu=fpv5-d16 -mfloat-abi=hard -mthumb"
+    common_cppflags="$common_cppflags -mcpu=cortex-m7 -mfpu=fpv5-d16 -mfloat-abi=hard -mthumb" ;; #(
+  armv7m-cm7-*) :
+    common_cflags="$common_cflags -mcpu=cortex-m7 -mfpu=fpv5-d16 -mfloat-abi=soft -mthumb"
+    common_cppflags="$common_cppflags -mcpu=cortex-m7 -mfpu=fpv5-d16 -mfloat-abi=soft -mthumb" ;;
   *) :
     ;;
 esac

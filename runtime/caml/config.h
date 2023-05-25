@@ -175,7 +175,8 @@ typedef uint64_t uintnat;
    as first-class values (GCC 2.x). */
 
 #if defined(__GNUC__) && __GNUC__ >= 2 && !defined(DEBUG) \
-    && !defined (SHRINKED_GNUC) && !defined (MODEL_armv7r)
+    && !defined (SHRINKED_GNUC) \
+    && !defined (MODEL_armv7r) && !defined (MODEL_armv7m_cm7)
 #define THREADED_CODE
 #endif
 
@@ -186,7 +187,7 @@ typedef uint64_t uintnat;
    [Page_size] must be a multiple of [sizeof (value)].
    [Page_log] must be be >= 8 and <= 20.
    Do not change the definition of [Page_size]. */
-#if defined(MODEL_armv7r)
+#if defined(MODEL_armv7r) || defined(MODEL_armv7m_cm7)
 #define Page_log 8              /* A page is 256 bytes for ARMv7-R. */
 #else
 #define Page_log 12             /* A page is 4 kilobytes. */
@@ -194,21 +195,21 @@ typedef uint64_t uintnat;
 #define Page_size (1 << Page_log)
 
 /* Initial size of stack (bytes). */
-#if defined(MODEL_armv7r)
+#if defined(MODEL_armv7r) || defined(MODEL_armv7m_cm7)
 #define Stack_size (256 * sizeof(value))
 #else
 #define Stack_size (4096 * sizeof(value))
 #endif
 
 /* Minimum free size of stack (bytes); below that, it is reallocated. */
-#if defined(MODEL_armv7r)
+#if defined(MODEL_armv7r) || defined(MODEL_armv7m_cm7)
 #define Stack_threshold (32 * sizeof(value))
 #else
 #define Stack_threshold (256 * sizeof(value))
 #endif
 
 /* Default maximum size of the stack (words). */
-#if defined(MODEL_armv7r)
+#if defined(MODEL_armv7r) || defined(MODEL_armv7m_cm7)
 #define Max_stack_def (16 * 1024)
 #else
 #define Max_stack_def (1024 * 1024)
@@ -228,14 +229,14 @@ typedef uint64_t uintnat;
 /* Maximum size of the minor zone (words).
    Must be greater than or equal to [Minor_heap_min].
 */
-#if defined(MODEL_armv7r)
+#if defined(MODEL_armv7r) || defined(MODEL_armv7m_cm7)
 #define Minor_heap_max 8192
 #else
 #define Minor_heap_max (1 << 28)
 #endif
 
 /* Default size of the minor zone. (words)  */
-#if defined(MODEL_armv7r)
+#if defined(MODEL_armv7r) || defined(MODEL_armv7m_cm7)
 #define Minor_heap_def 8192
 #else
 #define Minor_heap_def 262144
@@ -244,7 +245,7 @@ typedef uint64_t uintnat;
 
 /* Minimum size increment when growing the heap (words).
    Must be a multiple of [Page_size / sizeof (value)]. */
-#if defined(MODEL_armv7r)
+#if defined(MODEL_armv7r) || defined(MODEL_armv7m_cm7)
 #define Heap_chunk_min Page_size
 #else
 #define Heap_chunk_min (15 * Page_size)
@@ -253,7 +254,7 @@ typedef uint64_t uintnat;
 /* Default size increment when growing the heap.
    If this is <= 1000, it's a percentage of the current heap size.
    If it is > 1000, it's a number of words. */
-#if defined(MODEL_armv7r)
+#if defined(MODEL_armv7r) || defined(MODEL_armv7m_cm7)
 #define Heap_chunk_def 10
 #else
 #define Heap_chunk_def 15
@@ -261,7 +262,7 @@ typedef uint64_t uintnat;
 
 /* Default initial size of the major heap (words);
    Must be a multiple of [Page_size / sizeof (value)]. */
-#if defined(MODEL_armv7r)
+#if defined(MODEL_armv7r) || defined(MODEL_armv7m_cm7)
 #define Init_heap_def (8 * Page_size)
 #else
 #define Init_heap_def (31 * Page_size)

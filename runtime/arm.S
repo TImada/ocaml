@@ -79,18 +79,17 @@
         .endm
 
 /* For ARMv7-R on top of a FreeRTOS platform */
-#elif defined(SYS_freestanding_eabi) && defined(MODEL_armv7r)
+#elif defined(MODEL_armv7r)
         .arch   armv7-r
-        .arm
-
-    /* Compatibility macros */
-        .macro  cbz reg, lbl
-        cmp     \reg, #0
-        beq     \lbl
-        .endm
-#elif defined(SYS_freestanding_eabihf) && defined(MODEL_armv7r)
-        .arch   armv7-r
+  #if defined(SYS_freestanding_eabihf) 
         .fpu    vfpv3-d16
+  #endif
+        .thumb
+#elif defined(MODEL_armv7m_cm7)
+        .arch   armv7e-m
+  #if defined(SYS_freestanding_eabihf) 
+        .fpu    fpv5-d16
+  #endif
         .thumb
 #endif
 

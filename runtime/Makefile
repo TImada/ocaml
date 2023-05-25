@@ -138,7 +138,7 @@ else ifeq "$(UNIX_OR_WIN32)" "freestanding"
 ASPPFLAGS += -DMODEL_$(MODEL)
 endif
 
-# CPU architecture specific compiler options
+# CPU architecture specific compiler options (ARMv7R)
 ifeq "$(MODEL)" "armv7r"
 OC_CFLAGS += -march=armv7-r+vfpv3-d16 -mfpu=vfpv3-d16  
 OC_CPPFLAGS += -march=armv7-r+vfpv3-d16 -mfpu=vfpv3-d16   
@@ -150,6 +150,19 @@ OC_CFLAGS += -mfloat-abi=hard -mthumb
 OC_CPPFLAGS += -mfloat-abi=hard -mthumb  
 endif
 endif
+# CPU architecture specific compiler options (ARMv7M Cortex-M7)
+ifeq "$(MODEL)" "armv7m_cm7"
+OC_CFLAGS += -march=armv7e-m -mfpu=fpv5-d16  
+OC_CPPFLAGS += -march=armv7e-m -mfpu=fpv5-d16   
+ifeq "$(SYSTEM)" "freestanding_eabi"
+OC_CFLAGS += -mfloat-abi=softfp -mthumb
+OC_CPPFLAGS += -mfloat-abi=softfp -mthumb
+else ifeq "$(SYSTEM)" "freestanding_eabihf"
+OC_CFLAGS += -mfloat-abi=hard -mthumb 
+OC_CPPFLAGS += -mfloat-abi=hard -mthumb  
+endif
+endif
+
 
 # Commands used to build native libraries
 

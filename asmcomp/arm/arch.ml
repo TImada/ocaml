@@ -19,8 +19,8 @@
 open Format
 
 type abi = EABI | EABI_HF
-type arch = ARMv4 | ARMv5 | ARMv5TE | ARMv6 | ARMv6T2 | ARMv7 | ARMv7R | ARMv8
-type fpu = Soft | VFPv2 | VFPv3_D16 | VFPv3
+type arch = ARMv4 | ARMv5 | ARMv5TE | ARMv6 | ARMv6T2 | ARMv7 | ARMv7R | ARMv7M_CM7 | ARMv8
+type fpu = Soft | VFPv2 | VFPv3_D16 | VFPv3 | FPv5_D16
 
 let abi =
   match Config.system with
@@ -29,20 +29,22 @@ let abi =
   | _ -> assert false
 
 let string_of_arch = function
-    ARMv4   -> "armv4"
-  | ARMv5   -> "armv5"
-  | ARMv5TE -> "armv5te"
-  | ARMv6   -> "armv6"
-  | ARMv6T2 -> "armv6t2"
-  | ARMv7   -> "armv7"
-  | ARMv7R  -> "armv7r"
-  | ARMv8   -> "armv8"
+    ARMv4      -> "armv4"
+  | ARMv5      -> "armv5"
+  | ARMv5TE    -> "armv5te"
+  | ARMv6      -> "armv6"
+  | ARMv6T2    -> "armv6t2"
+  | ARMv7      -> "armv7"
+  | ARMv7R     -> "armv7r"
+  | ARMv7M_CM7 -> "armv7m_cm7"
+  | ARMv8      -> "armv8"
 
 let string_of_fpu = function
     Soft      -> "soft"
   | VFPv2     -> "vfpv2"
   | VFPv3_D16 -> "vfpv3-d16"
   | VFPv3     -> "vfpv3"
+  | FPv5_D16  -> "fpv5-d16"
 
 (* Machine-specific command-line options *)
 
@@ -50,18 +52,20 @@ let (arch, fpu, thumb) =
   let (def_arch, def_fpu, def_thumb) =
     begin match abi, Config.model with
     (* Defaults for architecture, FPU and Thumb *)
-      EABI, "armv5"      -> ARMv5,   Soft,      false
-    | EABI, "armv5te"    -> ARMv5TE, Soft,      false
-    | EABI, "armv6"      -> ARMv6,   Soft,      false
-    | EABI, "armv6t2"    -> ARMv6T2, Soft,      false
-    | EABI, "armv7"      -> ARMv7,   Soft,      false
-    | EABI, "armv7r"     -> ARMv7R,  Soft,      false
-    | EABI, "armv8"      -> ARMv8,   Soft,      false
-    | EABI, _            -> ARMv4,   Soft,      false
-    | EABI_HF, "armv6"   -> ARMv6,   VFPv2,     false
-    | EABI_HF, "armv8"   -> ARMv8,   VFPv3,     true
-    | EABI_HF, "armv7r"  -> ARMv7R,  VFPv3_D16, true
-    | EABI_HF, _         -> ARMv7,   VFPv3_D16, true
+      EABI, "armv5"         -> ARMv5,      Soft,      false
+    | EABI, "armv5te"       -> ARMv5TE,    Soft,      false
+    | EABI, "armv6"         -> ARMv6,      Soft,      false
+    | EABI, "armv6t2"       -> ARMv6T2,    Soft,      false
+    | EABI, "armv7"         -> ARMv7,      Soft,      false
+    | EABI, "armv7r"        -> ARMv7R,     Soft,      true
+    | EABI, "armv7m_cm7"    -> ARMv7M_CM7, Soft,      true
+    | EABI, "armv8"         -> ARMv8,      Soft,      false
+    | EABI, _               -> ARMv4,      Soft,      false
+    | EABI_HF, "armv6"      -> ARMv6,      VFPv2,     false
+    | EABI_HF, "armv8"      -> ARMv8,      VFPv3,     true
+    | EABI_HF, "armv7r"     -> ARMv7R,     VFPv3_D16, true
+    | EABI_HF, "armv7m_cm7" -> ARMv7M_CM7, FPv5_D16,  true
+    | EABI_HF, _            -> ARMv7,      VFPv3_D16, true
     end in
   (ref def_arch, ref def_fpu, ref def_thumb)
 
@@ -74,6 +78,7 @@ let farch spec =
            | "armv6t2"                     -> ARMv6T2
            | "armv7"                       -> ARMv7
            | "armv7r"                      -> ARMv7R
+           | "armv7m_cm7"                  -> ARMv7M_CM7
            | "armv8"                       -> ARMv8
            | spec -> raise (Arg.Bad ("wrong '-farch' option: " ^ spec))
   end
@@ -84,6 +89,7 @@ let ffpu spec =
           | "vfpv2" when abi = EABI_HF     -> VFPv2
           | "vfpv3-d16" when abi = EABI_HF -> VFPv3_D16
           | "vfpv3" when abi = EABI_HF     -> VFPv3
+          | "fpv5-d16" when abi = EABI_HF  -> FPv5_D16
           | spec -> raise (Arg.Bad ("wrong '-ffpu' option: " ^ spec))
   end
 

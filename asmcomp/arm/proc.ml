@@ -69,6 +69,7 @@ let register_class r =
   | (Val | Int | Addr), _  -> 0
   | Float, VFPv2         -> 1
   | Float, VFPv3_D16     -> 1
+  | Float, FPv5_D16      -> 1
   | Float, _             -> 2
 
 let num_available_registers =
