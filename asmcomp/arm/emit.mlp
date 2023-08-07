@@ -224,22 +224,18 @@ let emit_intconst dst n =
   end
 
 (* Adjust sp (up or down) by the given byte amount *)
-
 let emit_stack_adjustment n =
   if n = 0 then 0 else begin
-    (* Workaround for interrupt hadling in FreeRTOS *)
     let instr = if n < 0 then "sub" else "add" in
-    let dintr = ` cpsid i\n`;
-                ` isb\n`; 2 in
     let ninstr = decompose_intconst (Int32.of_int (abs n))
                    (fun bits ->
                      `	{emit_string instr}	sp, sp, #{emit_int32 bits}\n`) in
     cfi_adjust_cfa_offset (-n);
-    dintr + ninstr
+    ninstr
   end
 
- (* Deallocate the stack frame before a return or tail call *)
-
+(* Deallocate the stack frame before a return or tail call *)
+(* Original *)
 let output_epilogue env f =
   let n = frame_size env in
   if n > 0 then begin
@@ -250,6 +246,34 @@ let output_epilogue env f =
     ninstr
   end else
     f ()
+
+(* Deallocate the stack frame before a return or tail call *)
+(* ARMv7-M/R FreeRTOS hook *)
+let output_epilogue_armv7 env f =
+  let n = frame_size env in
+  if n > 0 then begin
+    let ldrinstr = 
+      if env.f.fun_contains_calls then begin
+        `	ldr	lr, [sp, #{emit_int (n-4)}]\n`; 0
+      end else begin
+        0
+      end
+    in
+    let ninstr = ldrinstr + emit_stack_adjustment n in
+    let ninstr = ninstr + f () in
+    (* reset CFA back cause function body may continue *)
+    cfi_adjust_cfa_offset n;
+    ninstr
+  end else begin
+    let ldrinstr = 
+      if env.f.fun_contains_calls then begin
+        `	ldr	lr, [sp, #{emit_int (-4)}]\n`; 0
+      end else begin
+        0
+      end
+    in
+    ldrinstr + f ()
+  end
 
 (* Label a floating-point literal *)
 let float_literal env fl =
@@ -416,18 +440,13 @@ let emit_instr env i =
       let n = frame_size env in
       let num_instrs =
         if n > 0 then begin
-          (* Workaround for interrupt hadling in FreeRTOS *)
           let num_instrs = emit_stack_adjustment (-n) in
           if env.f.fun_contains_calls then begin
             cfi_offset ~reg:14 (* lr *) ~offset:(-4);
             `	str	lr, [sp, #{emit_int(n - 4)}]\n`;
-            ` cpsie i\n`;
-            ` isb\n`;
-            num_instrs + 3
+            num_instrs + 1
           end else begin
-            ` cpsie i\n`;
-            ` isb\n`;
-            num_instrs + 2
+            num_instrs
           end
         end else begin
           0
@@ -511,24 +530,17 @@ let emit_instr env i =
         `	{emit_call func}\n`;
         `{record_frame env i.live (Dbg_other i.dbg)}\n`; 1
     | Lop(Itailcall_ind) ->
-        output_epilogue env begin fun () ->
-          if env.f.fun_contains_calls then
-            `	ldr	lr, [sp, #{emit_int (-4)}]\n`;
-            ` cpsie i\n`;
-            ` isb\n`;
-            `	bx	{emit_reg i.arg.(0)}\n`; 4
+        (* Workaround for interrupt handling in FreeRTOS *)
+        output_epilogue_armv7 env begin fun () ->
+          `	bx	{emit_reg i.arg.(0)}\n`; 2
         end
     | Lop(Itailcall_imm { func; }) ->
         if func = env.f.fun_name then begin
           `	b	{emit_label env.f.fun_tailrec_entry_point_label}\n`; 1
         end else begin
-          output_epilogue env begin fun () ->
-            (* Workaround for interrupt hadling in FreeRTOS *)
-            if env.f.fun_contains_calls then
-              `	ldr	lr, [sp, #{emit_int (-4)}]\n`;
-              ` cpsie i\n`;
-              ` isb\n`;
-              `	{emit_jump func}\n`; 4
+          (* Workaround for interrupt handling in FreeRTOS *)
+          output_epilogue_armv7 env begin fun () ->
+            `	{emit_jump func}\n`; 2
           end
         end
     | Lop(Iextcall { func; alloc = false; }) ->
@@ -541,11 +553,8 @@ let emit_instr env i =
     | Lop(Istackoffset n) ->
         assert (n mod 8 = 0);
         let ninstr = emit_stack_adjustment (-n) in
-        (* Workaround for interrupt hadling in FreeRTOS *)
-        ` cpsie i\n`;
-        ` isb\n`;
         env.stack_offset <- env.stack_offset + n;
-        ninstr + 2
+        ninstr
     | Lop(Iload(Single, addr, _mut)) when !fpu >= VFPv2 ->
         `	flds	s14, {emit_addressing addr i.arg 0}\n`;
         `	fcvtds	{emit_reg i.res.(0)}, s14\n`; 2
@@ -751,10 +760,7 @@ let emit_instr env i =
         `	ldr	lr, [sp, #{emit_int(n-4)}]\n`; 1
     | Lreturn ->
         output_epilogue env begin fun () ->
-          (* Workaround for interrupt hadling in FreeRTOS *)
-          ` cpsie i\n`;
-          ` isb\n`;
-          `	bx	lr\n`; 3
+          `	bx	lr\n`; 1
         end
     | Llabel lbl ->
         `{emit_label lbl}:\n`; 0
